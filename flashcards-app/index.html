@@ -7,10 +7,48 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main id="app">
-    <h1>Flashcards App</h1>
-    <p>Welcome to the flashcards app.</p>
-  </main>
+  <header class="site-header">
+    <div class="container">
+      <h1 class="app-title">Flashcards</h1>
+      <div class="header-actions">
+        <button id="new-deck-btn" class="btn primary">New Deck</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">Decks</div>
+      <ul id="decks-list" class="decks-list" aria-label="Decks"></ul>
+    </aside>
+
+    <main id="main" class="main">
+      <div class="deck-header">
+        <h2 id="deck-title">No deck selected</h2>
+        <div class="deck-actions" id="deck-actions" hidden>
+          <input id="search" class="search" placeholder="Search cards..." aria-label="Search cards">
+          <button id="shuffle-btn" class="btn">Shuffle</button>
+          <button id="new-card-btn" class="btn">New Card</button>
+        </div>
+      </div>
+
+      <section id="card-area" class="card-area">
+        <div id="card" class="card" aria-live="polite">
+          <div class="face front" id="card-front">—</div>
+          <div class="face back" id="card-back">—</div>
+        </div>
+
+        <div class="card-controls">
+          <button id="prev-btn" class="btn">Prev</button>
+          <button id="flip-btn" class="btn">Flip</button>
+          <button id="next-btn" class="btn">Next</button>
+        </div>
+
+        <div id="card-meta" class="card-meta"></div>
+      </section>
+    </main>
+  </div>
+
   <script src="app.js" defer></script>
 </body>
 </html>
