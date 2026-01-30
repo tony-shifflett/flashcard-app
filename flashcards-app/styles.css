@@ -80,9 +80,37 @@ html, body {
 }
 
 .decks-list li {
-  padding: 0.5rem 0.6rem;
+  padding: 0.25rem 0.25rem;
   border-radius: 6px;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.decks-list li .deck-title-btn {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  width: 100%;
   cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.decks-list li .deck-actions {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  padding-right: 0.4rem;
+}
+
+.btn.small {
+  padding: 0.25rem 0.45rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
 }
 
 .decks-list li.active {
@@ -143,15 +171,14 @@ html, body {
 }
 
 .card-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
   transition: transform 400ms ease;
 }
 
-.card.flipped .front {
+.card.flipped .card-inner {
   transform: rotateY(180deg);
-}
-
-.card.flipped .back {
-  transform: rotateY(360deg);
 }
 
 .card-controls {
@@ -178,3 +205,13 @@ html, body {
     height: 260px;
   }
 }
+
+.site-footer {
+  margin: 0.5rem auto 2rem;
+  padding: 0.6rem 1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.site-footer p { margin: 0; }

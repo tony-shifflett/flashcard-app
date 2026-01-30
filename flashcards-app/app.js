@@ -8,7 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     decks: [],
     selectedDeckId: null,
     filteredIndices: null, // array of indices representing search results
-    currentIndex: 0
+    currentIndex: 0,
+    isFlipped: false
   };
 
   // Element refs
@@ -76,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const idx = deck.cards.length - 1;
     state.currentIndex = idx;
     state.filteredIndices = null;
+    state.isFlipped = false;
     renderMain();
     saveState();
   }
@@ -84,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.selectedDeckId = deckId;
     state.currentIndex = 0;
     state.filteredIndices = null;
+    state.isFlipped = false;
     renderMain();
     renderDecks();
     saveState();
@@ -93,12 +96,68 @@ document.addEventListener('DOMContentLoaded', () => {
     decksList.innerHTML = '';
     state.decks.forEach(deck => {
       const li = document.createElement('li');
-      li.textContent = deck.title + ` (${deck.cards.length})`;
-      li.dataset.id = deck.id;
       li.classList.toggle('active', deck.id === state.selectedDeckId);
-      li.addEventListener('click', () => selectDeck(deck.id));
+
+      // Title button (select deck)
+      const titleBtn = document.createElement('button');
+      titleBtn.className = 'deck-title-btn';
+      titleBtn.textContent = deck.title + ` (${deck.cards.length})`;
+      titleBtn.addEventListener('click', () => selectDeck(deck.id));
+
+      // Actions (edit / delete)
+      const actions = document.createElement('div');
+      actions.className = 'deck-actions';
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn small';
+      editBtn.title = 'Edit deck name';
+      editBtn.innerHTML = '✏️';
+      editBtn.addEventListener('click', (e) => { e.stopPropagation(); editDeck(deck.id); });
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn small';
+      delBtn.title = 'Delete deck';
+      delBtn.innerHTML = '🗑️';
+      delBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteDeck(deck.id); });
+
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+
+      li.appendChild(titleBtn);
+      li.appendChild(actions);
       decksList.appendChild(li);
     });
+  }
+
+  function editDeck(deckId) {
+    const deck = state.decks.find(d => d.id === deckId);
+    if (!deck) return;
+    const title = prompt('Edit deck title', deck.title);
+    if (title === null) return;
+    deck.title = title.trim() || deck.title;
+    renderDecks();
+    renderMain();
+    saveState();
+  }
+
+  function deleteDeck(deckId) {
+    const deck = state.decks.find(d => d.id === deckId);
+    if (!deck) return;
+    const ok = confirm(`Delete deck "${deck.title}"? This cannot be undone.`);
+    if (!ok) return;
+    const idx = state.decks.findIndex(d => d.id === deckId);
+    if (idx === -1) return;
+    state.decks.splice(idx, 1);
+    // If the deleted deck was selected, move selection
+    if (state.selectedDeckId === deckId) {
+      if (state.decks.length) state.selectedDeckId = state.decks[0].id;
+      else state.selectedDeckId = null;
+      state.currentIndex = 0;
+      state.isFlipped = false;
+    }
+    renderDecks();
+    renderMain();
+    saveState();
   }
 
   function renderMain() {
@@ -145,8 +204,12 @@ document.addEventListener('DOMContentLoaded', () => {
     backEl.textContent = card.back;
     cardMeta.textContent = `Card ${idx + 1} of ${cards.length}`;
 
-    // ensure card not flipped
-    cardEl.classList.remove('flipped');
+    // reflect flip state
+    if (state.isFlipped) {
+      cardEl.classList.add('flipped');
+    } else {
+      cardEl.classList.remove('flipped');
+    }
   }
 
   function nextCard() {
@@ -155,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const total = (state.filteredIndices ? state.filteredIndices.length : deck.cards.length);
     if (total === 0) return;
     state.currentIndex = (state.currentIndex + 1) % total;
+    state.isFlipped = false;
     renderCard();
     saveState();
   }
@@ -165,12 +229,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const total = (state.filteredIndices ? state.filteredIndices.length : deck.cards.length);
     if (total === 0) return;
     state.currentIndex = (state.currentIndex - 1 + total) % total;
+    state.isFlipped = false;
     renderCard();
     saveState();
   }
 
   function flipCard() {
-    cardEl.classList.toggle('flipped');
+    state.isFlipped = !state.isFlipped;
+    if (state.isFlipped) cardEl.classList.add('flipped');
+    else cardEl.classList.remove('flipped');
   }
 
   function shuffleDeck() {
@@ -182,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     state.currentIndex = 0;
     state.filteredIndices = null;
+    state.isFlipped = false;
     renderMain();
     saveState();
   }
@@ -193,6 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!query) {
       state.filteredIndices = null;
       state.currentIndex = 0;
+      state.isFlipped = false;
       renderMain();
       return;
     }
@@ -204,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     state.filteredIndices = matches;
     state.currentIndex = 0;
+    state.isFlipped = false;
     renderMain();
   }
 
