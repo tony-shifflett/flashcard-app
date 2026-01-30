@@ -34,8 +34,10 @@
 
       <section id="card-area" class="card-area">
         <div id="card" class="card" aria-live="polite">
-          <div class="face front" id="card-front">—</div>
-          <div class="face back" id="card-back">—</div>
+          <div class="card-inner">
+            <div class="face front" id="card-front">—</div>
+            <div class="face back" id="card-back">—</div>
+          </div>
         </div>
 
         <div class="card-controls">
@@ -48,6 +50,12 @@
       </section>
     </main>
   </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p><strong>Quick tips:</strong> Create a deck with <code>New Deck</code>, select it from the sidebar, then add cards with <code>New Card</code>. Use <code>Prev</code>/<code>Next</code> or arrow keys to navigate and <code>Space</code> to flip.</p>
+    </div>
+  </footer>
 
   <script src="app.js" defer></script>
 </body>
