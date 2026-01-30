@@ -31,6 +31,143 @@ document.addEventListener('DOMContentLoaded', () => {
   // Utilities
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 
+  // Modal helpers
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalMessage = document.getElementById('modal-message');
+  const modalInput = document.getElementById('modal-input');
+  const modalInput2 = document.getElementById('modal-input-2');
+  const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+  const modalCancelBtn = document.getElementById('modal-cancel-btn');
+  let modalOnConfirm = null;
+  let previouslyFocused = null;
+
+  function openModal({ title = '', message = '', defaultValue = '', defaultValue2 = '', showInput = false, showInput2 = false, confirmText = 'Confirm', onConfirm = null }) {
+    modalTitle.textContent = title;
+    modalMessage.textContent = message;
+    modalConfirmBtn.textContent = confirmText;
+    modalOnConfirm = onConfirm;
+    previouslyFocused = document.activeElement;
+
+    if (showInput) {
+      modalInput.style.display = '';
+      modalInput.value = defaultValue || '';
+    } else {
+      modalInput.style.display = 'none';
+      modalInput.value = '';
+    }
+
+    if (showInput2) {
+      modalInput2.style.display = '';
+      modalInput2.value = defaultValue2 || '';
+    } else {
+      modalInput2.style.display = 'none';
+      modalInput2.value = '';
+    }
+
+    // focus preference: input1 -> input2 -> confirm
+    if (showInput) modalInput.focus();
+    else if (showInput2) modalInput2.focus();
+    else modalConfirmBtn.focus();
+
+    modal.removeAttribute('hidden');
+
+    // confirm handler
+    modalConfirmBtn.onclick = () => {
+      const val = showInput ? modalInput.value : undefined;
+      const val2 = showInput2 ? modalInput2.value : undefined;
+      try { if (modalOnConfirm) modalOnConfirm(val, val2); } catch (err) { console.error(err); }
+      closeModal();
+    };
+
+    modalCancelBtn.onclick = () => closeModal();
+
+    // keyboard handler (Escape / Enter)
+    modal.onkeydown = (e) => {
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Enter') {
+        // if an input is focused, use Enter to confirm (but prevent accidental submits)
+        e.preventDefault();
+        modalConfirmBtn.click();
+      }
+    };
+
+    // click outside to close
+    modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+  }
+
+  function closeModal() {
+    modal.setAttribute('hidden', '');
+    modalOnConfirm = null;
+    modalConfirmBtn.onclick = null;
+    modalCancelBtn.onclick = null;
+    modal.onkeydown = null;
+    modal.onclick = null;
+    modalInput.value = '';
+    modalInput2.value = '';
+    if (previouslyFocused && previouslyFocused.focus) previouslyFocused.focus();
+  }
+
+  // Card edit/delete helpers
+  const editCardBtn = document.getElementById('edit-card-btn');
+  const deleteCardBtn = document.getElementById('delete-card-btn');
+
+  function getCurrentDeckAndIndex() {
+    const deck = state.decks.find(d => d.id === state.selectedDeckId);
+    if (!deck) return {};
+    const cards = getCurrentCards(deck);
+    if (!cards || cards.length === 0) return { deck };
+    const localIndex = Math.max(0, Math.min(state.currentIndex, cards.length - 1));
+    const globalIndex = state.filteredIndices ? state.filteredIndices[localIndex] : localIndex;
+    return { deck, localIndex, globalIndex };
+  }
+
+  function editCard() {
+    const { deck, globalIndex } = getCurrentDeckAndIndex();
+    if (!deck || typeof globalIndex !== 'number') return;
+    const card = deck.cards[globalIndex];
+    openModal({
+      title: 'Edit card',
+      message: 'Edit front and back text:',
+      showInput: true,
+      defaultValue: card.front,
+      showInput2: true,
+      defaultValue2: card.back,
+      confirmText: 'Save',
+      onConfirm: (front, back) => {
+        card.front = (front || '').trim();
+        card.back = (back || '').trim();
+        state.isFlipped = false;
+        renderCard();
+        renderDecks();
+        saveState();
+      }
+    });
+  }
+
+  function deleteCard() {
+    const { deck, globalIndex } = getCurrentDeckAndIndex();
+    if (!deck || typeof globalIndex !== 'number') return;
+    openModal({
+      title: 'Delete card',
+      message: 'Delete this card? This cannot be undone.',
+      showInput: false,
+      confirmText: 'Delete',
+      onConfirm: () => {
+        deck.cards.splice(globalIndex, 1);
+        // adjust currentIndex
+        if (state.currentIndex >= deck.cards.length) state.currentIndex = Math.max(0, deck.cards.length - 1);
+        state.isFlipped = false;
+        renderCard();
+        renderDecks();
+        saveState();
+      }
+    });
+  }
+
+  editCardBtn.addEventListener('click', editCard);
+  deleteCardBtn.addEventListener('click', deleteCard);
+
   function saveState() {
     try {
       const data = {
@@ -44,6 +181,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function editDeck(deckId) {
+    const deck = state.decks.find(d => d.id === deckId);
+    if (!deck) return;
+    openModal({
+      title: 'Edit deck name',
+      message: 'Enter a new deck title:',
+      defaultValue: deck.title,
+      showInput: true,
+      confirmText: 'Save',
+      onConfirm: (value) => {
+        const newTitle = (value || '').trim();
+        if (newTitle) deck.title = newTitle;
+        renderDecks();
+        renderMain();
+        saveState();
+      }
+    });
+  }
+
+  function deleteDeck(deckId) {
+    const deck = state.decks.find(d => d.id === deckId);
+    if (!deck) return;
+    openModal({
+      title: 'Delete deck',
+      message: `Delete deck "${deck.title}"? This cannot be undone.`,
+      showInput: false,
+      confirmText: 'Delete',
+      onConfirm: () => {
+        const idx = state.decks.findIndex(d => d.id === deckId);
+        if (idx === -1) return;
+        state.decks.splice(idx, 1);
+        // If the deleted deck was selected, move selection
+        if (state.selectedDeckId === deckId) {
+          if (state.decks.length) state.selectedDeckId = state.decks[0].id;
+          else state.selectedDeckId = null;
+          state.currentIndex = 0;
+          state.isFlipped = false;
+        }
+        renderDecks();
+        renderMain();
+        saveState();
+      }
+    });
+  }
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);

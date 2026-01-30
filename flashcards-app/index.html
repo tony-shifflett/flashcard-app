@@ -44,6 +44,8 @@
           <button id="prev-btn" class="btn">Prev</button>
           <button id="flip-btn" class="btn">Flip</button>
           <button id="next-btn" class="btn">Next</button>
+          <button id="edit-card-btn" class="btn small" title="Edit card">✏️</button>
+          <button id="delete-card-btn" class="btn small" title="Delete card">🗑️</button>
         </div>
 
         <div id="card-meta" class="card-meta"></div>
@@ -56,6 +58,19 @@
       <p><strong>Quick tips:</strong> Create a deck with <code>New Deck</code>, select it from the sidebar, then add cards with <code>New Card</code>. Use <code>Prev</code>/<code>Next</code> or arrow keys to navigate and <code>Space</code> to flip.</p>
     </div>
   </footer>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message">
+      <h3 id="modal-title"></h3>
+      <p id="modal-message"></p>
+      <input id="modal-input" class="modal-input" />
+      <input id="modal-input-2" class="modal-input" />
+      <div class="modal-actions">
+        <button id="modal-cancel-btn" class="btn">Cancel</button>
+        <button id="modal-confirm-btn" class="btn primary">Confirm</button>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js" defer></script>
 </body>
